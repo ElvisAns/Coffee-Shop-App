@@ -1,11 +1,12 @@
+from crypt import methods
 import os
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
-from .auth.auth import AuthError, requires_auth
+from database.models import db_drop_and_create_all, setup_db, Drink
+from auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
 setup_db(app)
@@ -28,7 +29,12 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
-
+@app.route('/drinks', methods=['GET'])
+def get_drinks_short():
+    return jsonify({
+        "success" : True,
+        "drinks" : [drink.short() for drink in Drink.query.all()]
+    }),200
 
 '''
 @TODO implement endpoint
@@ -38,6 +44,14 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+@app.route('/drinks-detail',methods=['GET'])
+@requires_auth('get:drinks-detail')
+def get_drinks_details():
+    return jsonify({
+        "success" : True,
+        "drinks" : [drink.long() for drink in Drink.query.all()]
+    })
 
 
 '''
@@ -112,3 +126,6 @@ def unprocessable(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
+
+if __name__ == "__main__":
+    app.run(debug=True,host='0.0.0.0',port=5000)
