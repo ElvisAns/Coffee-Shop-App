@@ -64,6 +64,25 @@ def get_drinks_details():
         or appropriate status code indicating reason for failure
 '''
 
+@app.route('/drinks',methods=['POST'])
+@requires_auth("post:drinks")
+def add_new_drink():
+    data = request.json
+    try:
+        title = data["title"]
+        recipe = data["recipe"]
+
+        toSave = Drink(title=title,recipe=recipe)
+        Drink.insert()
+        return jsonify({
+            "success" : True,
+            "drink" : toSave.short()
+        })
+    except:
+        return jsonify({
+            "message" : "There was an error proccessing your request"
+        }),400
+
 
 '''
 @TODO implement endpoint
