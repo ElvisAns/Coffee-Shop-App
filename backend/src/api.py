@@ -10,7 +10,18 @@ from auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
 setup_db(app)
-CORS(app)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
+
+# CORS Headers
+@app.after_request
+def after_request(response):
+    response.headers.add("Access-Control-Allow-Headers",
+                         "Content-Type,Authorization,true")
+    response.headers.add("Access-Control-Allow-Methods",
+                         "GET,PUT,POST,DELETE,OPTIONS")
+    return response
+
 
 '''
 @TODO uncomment the following line to initialize the datbase
@@ -29,12 +40,15 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
+
+
 @app.route('/drinks', methods=['GET'])
 def get_drinks_short():
     return jsonify({
-        "success" : True,
-        "drinks" : [drink.short() for drink in Drink.query.all()]
-    }),200
+        "success": True,
+        "drinks": [drink.short() for drink in Drink.query.all()]
+    }), 200
+
 
 '''
 @TODO implement endpoint
@@ -45,12 +59,13 @@ def get_drinks_short():
         or appropriate status code indicating reason for failure
 '''
 
-@app.route('/drinks-detail',methods=['GET'])
+
+@app.route('/drinks-detail', methods=['GET'])
 @requires_auth('get:drinks-detail')
 def get_drinks_details():
     return jsonify({
-        "success" : True,
-        "drinks" : [drink.long() for drink in Drink.query.all()]
+        "success": True,
+        "drinks": [drink.long() for drink in Drink.query.all()]
     })
 
 
@@ -64,7 +79,8 @@ def get_drinks_details():
         or appropriate status code indicating reason for failure
 '''
 
-@app.route('/drinks',methods=['POST'])
+
+@app.route('/drinks', methods=['POST'])
 @requires_auth("post:drinks")
 def add_new_drink():
     data = request.json
@@ -72,16 +88,12 @@ def add_new_drink():
         title = data["title"]
         recipe = data["recipe"]
 
-        toSave = Drink(title=title,recipe=recipe)
+        toSave = Drink(title=title, recipe=recipe)
         Drink.insert()
-        return jsonify({
-            "success" : True,
-            "drink" : toSave.short()
-        })
+        return jsonify({"success": True, "drink": toSave.short()})
     except:
-        return jsonify({
-            "message" : "There was an error proccessing your request"
-        }),400
+        return jsonify(
+            {"message": "There was an error proccessing your request"}), 400
 
 
 '''
@@ -95,8 +107,6 @@ def add_new_drink():
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
-
-
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -107,7 +117,6 @@ def add_new_drink():
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
-
 
 # Error Handling
 '''
@@ -134,17 +143,20 @@ def unprocessable(error):
                     }), 404
 
 '''
-
 '''
 @TODO implement error handler for 404
     error handler should conform to general task above
 '''
-
-
 '''
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
 
+@app.errorhandler(AuthError)
+def handle_auth_error(e):
+    return jsonify({
+        "message" : e.error
+    }),e.status_code
+
 if __name__ == "__main__":
-    app.run(debug=True,host='0.0.0.0',port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
