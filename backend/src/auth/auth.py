@@ -37,12 +37,15 @@ class AuthError(Exception):
     return the token part of the header
 '''
 def get_token_auth_header():
-    header = request.headers("Authorization")
+    header = request.headers.get("Authorization")
     if header:
         token = header.split(" ")[1]
         if token :
             return token
-    raise Exception("AuthError")
+    raise AuthError({
+            'code': 'Bad Request',
+            'description': 'No token present in the request.'
+        }, 400)
 
 '''
 @TODO implement check_permissions(permission, payload) method
