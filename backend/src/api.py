@@ -65,7 +65,6 @@ def get_drinks_short():
 def get_drinks_details(payload):
     return jsonify({
         "success": True,
-        "info" : payload,
         "drinks": [drink.long() for drink in Drink.query.all()]
     })
 
