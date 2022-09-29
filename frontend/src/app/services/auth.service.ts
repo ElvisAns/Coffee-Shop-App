@@ -71,6 +71,8 @@ export class AuthService {
   logout() {
     this.token = '';
     this.payload = null;
+    //Uncomment the following line in case we need to reset token everywhere
+    window.location.assign("https://dev-f-c9bg6g.us.auth0.com/v2/logout?returnTo=https://127.0.0.1:8100/tabs/user-page&client_id=b4HcPNHQv60YYwxdTcV4vPFTnFoRsnft")
     this.set_jwt();
   }
 
