@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
-
 from database.models import db_drop_and_create_all, setup_db, Drink
 from auth.auth import AuthError, requires_auth
 
@@ -19,7 +18,7 @@ def after_request(response):
     response.headers.add("Access-Control-Allow-Headers",
                          "Content-Type,Authorization,true")
     response.headers.add("Access-Control-Allow-Methods",
-                         "GET,PUT,POST,DELETE,OPTIONS")
+                         "GET,PUT,POST,DELETE,OPTIONS,PATCH")
     return response
 
 
@@ -91,7 +90,6 @@ def add_new_drink(payload):
         Drink.insert(toSave)
         return jsonify({"success": True, "drinks": toSave.short()})
     except Exception as e:
-        print(e)
         return jsonify(
             {"message": "There was an error proccessing your request"}), 400
 
@@ -107,6 +105,34 @@ def add_new_drink(payload):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route("/drinks/<int:id>", methods=["PATCH"])
+@requires_auth("patch:drinks")
+def update_drink(payload, id):
+    data = request.json
+    try:
+        title = data["title"]
+        recipe = json.dumps(data["recipe"])
+        toSave = Drink.query.get(id)
+        if (toSave):
+            toSave.title = title
+            toSave.recipe = recipe
+            toSave.update()
+            return jsonify({"success": True, "drinks": toSave.short()})
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Drink not found"
+            }), 404
+    except Exception as e:
+        message = e.orig.args
+        if message[0] == 'UNIQUE constraint failed: drink.title':
+            return jsonify({"message": "Duplicate entry for title"}), 409
+        return jsonify(
+            {"message": "There was an error proccessing your request"}), 400
+
+
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -117,6 +143,25 @@ def add_new_drink(payload):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+
+
+@app.route("/drinks/<int:id>", methods=["DELETE"])
+@requires_auth("delete:drinks")
+def delete_drink(payload, id):
+    try:
+        Todelete = Drink.query.get(id)
+        if (Todelete):
+            Drink.delete(Todelete)
+            return jsonify({"success": True, "delete": id})
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Drink not found"
+            }), 404
+    except Exception as e:
+        return jsonify(
+            {"message": "There was an error proccessing your request"}), 400
+
 
 # Error Handling
 '''
@@ -147,16 +192,36 @@ def unprocessable(error):
 @TODO implement error handler for 404
     error handler should conform to general task above
 '''
+
+
+@app.errorhandler(404)
+def no_ressource_found():
+    return jsonify({
+        "success": False,
+        "error": 404,
+        "message": "resource not found",
+    }), 404
+
+
+@app.errorhandler(500)
+def server_error():
+    return jsonify({
+        "success": False,
+        "error": 500,
+        "message": "Internal Server Error",
+    }), 500
+
+
 '''
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 '''
 
+
 @app.errorhandler(AuthError)
 def handle_auth_error(e):
-    return jsonify({
-        "message" : e.error
-    }),e.status_code
+    return jsonify({"message": e.error}), e.status_code
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
