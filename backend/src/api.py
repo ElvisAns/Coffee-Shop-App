@@ -62,9 +62,10 @@ def get_drinks_short():
 
 @app.route('/drinks-detail', methods=['GET'])
 @requires_auth('get:drinks-detail')
-def get_drinks_details():
+def get_drinks_details(payload):
     return jsonify({
         "success": True,
+        "info" : payload,
         "drinks": [drink.long() for drink in Drink.query.all()]
     })
 
@@ -82,16 +83,16 @@ def get_drinks_details():
 
 @app.route('/drinks', methods=['POST'])
 @requires_auth("post:drinks")
-def add_new_drink():
+def add_new_drink(payload):
     data = request.json
     try:
         title = data["title"]
-        recipe = data["recipe"]
-
+        recipe = json.dumps(data["recipe"])
         toSave = Drink(title=title, recipe=recipe)
-        Drink.insert()
-        return jsonify({"success": True, "drink": toSave.short()})
-    except:
+        Drink.insert(toSave)
+        return jsonify({"success": True, "drinks": toSave.short()})
+    except Exception as e:
+        print(e)
         return jsonify(
             {"message": "There was an error proccessing your request"}), 400
 
