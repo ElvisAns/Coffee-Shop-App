@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { environment } from '../../environments/environment';
 
@@ -17,8 +18,9 @@ export class AuthService {
 
   token: string;
   payload: any;
+  userInfo : Object;
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
   build_login_link(callbackPath = '') {
     let link = 'https://';
@@ -26,17 +28,19 @@ export class AuthService {
     link += '/authorize?';
     link += 'redirect_uri=' + this.callbackURL + "&";
     link += 'audience=' + this.audience + '&';
+    link += 'scope=openid%20profile%20email&';
     link += 'response_type=token&';
-    link += 'client_id=' + this.clientId ;
+    link += 'client_id=' + this.clientId;
     return link;
   }
+
 
   // invoked in app.component on load
   check_token_fragment() {
     // parse the fragment
     const fragment = window.location.hash.substr(1).split('&')[0].split('=');
     // check if the fragment includes the access token
-    if ( fragment[0] === 'access_token' ) {
+    if (fragment[0] === 'access_token') {
       // add the access token to the jwt
       this.token = fragment[1];
       // save jwts to localstore
@@ -71,7 +75,6 @@ export class AuthService {
   logout() {
     this.token = '';
     this.payload = null;
-    //Uncomment the following line in case we need to reset token everywhere
     window.location.assign("https://dev-f-c9bg6g.us.auth0.com/v2/logout?returnTo=https://127.0.0.1:8100/tabs/user-page&client_id=b4HcPNHQv60YYwxdTcV4vPFTnFoRsnft")
     this.set_jwt();
   }
