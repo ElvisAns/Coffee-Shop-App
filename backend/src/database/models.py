@@ -35,6 +35,7 @@ def db_drop_and_create_all():
     db.create_all()
     # add one demo row which is helping in POSTMAN test
     drink = Drink(
+        id=1,
         title='water',
         recipe='[{"name": "water", "color": "blue", "parts": 1}]'
     )
@@ -123,6 +124,9 @@ class Drink(db.Model):
 
     def update(self):
         db.session.commit()
+        
+    def rollback():
+        db.session.rollback()
 
     def __repr__(self):
         return json.dumps(self.short())
