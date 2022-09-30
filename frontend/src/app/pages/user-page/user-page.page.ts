@@ -27,7 +27,7 @@ export class UserPagePage implements OnInit {
 
   ngOnInit() {
     if (this.auth.activeJWT()) {
-      this.http.get(`https://${this.auth.url}/userinfo`, this.getHeaders())
+      this.http.get(`https://${this.auth.url}.auth0.com/userinfo`, this.getHeaders())
         .subscribe((res: any) => {
           this.userName = res.nickname;
           this.userEmail = res.name;
