@@ -18,15 +18,15 @@ export class AuthService {
 
   token: string;
   payload: any;
-  userInfo : Object;
+  userInfo: Object;
 
   constructor(private http: HttpClient) { }
 
   build_login_link(callbackPath = '') {
     let link = 'https://';
-    link += this.url;
+    link += this.url + ".auth0.com";
     link += '/authorize?';
-    link += 'redirect_uri=' + this.callbackURL + "&";
+    link += 'redirect_uri=' + this.callbackURL + callbackPath + "&";
     link += 'audience=' + this.audience + '&';
     link += 'scope=openid%20profile%20email&';
     link += 'response_type=token&';
