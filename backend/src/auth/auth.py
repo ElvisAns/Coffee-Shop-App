@@ -45,7 +45,7 @@ def get_token_auth_header():
     raise AuthError({
             'code': 'Bad Request',
             'description': 'No token present in the request.'
-        }, 400)
+        }, 401)
 
 '''
 @TODO implement check_permissions(permission, payload) method
