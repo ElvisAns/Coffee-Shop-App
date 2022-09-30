@@ -32,7 +32,7 @@ export class UserPagePage implements OnInit {
           this.userName = res.nickname;
           this.userEmail = res.name;
           this.userAvatar = res.picture;
-          this.showLoader = false;
+          setTimeout(()=>{this.showLoader = false},1000);
         })
     }
   }
