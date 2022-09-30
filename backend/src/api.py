@@ -28,7 +28,7 @@ def after_request(response):
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 !! Running this funciton will add one
 '''
-# db_drop_and_create_all()
+#db_drop_and_create_all()
 
 # ROUTES
 '''
@@ -90,8 +90,14 @@ def add_new_drink(payload):
         Drink.insert(toSave)
         return jsonify({"success": True, "drinks": toSave.short()})
     except Exception as e:
+        Drink.rollback()
+        if(hasattr(e,"orig")):
+            message = e.orig.args
+            if message[0] == 'UNIQUE constraint failed: drink.title':
+                return jsonify({"message": "Duplicate entry for title"}), 409
         return jsonify(
             {"message": "There was an error proccessing your request"}), 400
+
 
 
 '''
@@ -112,23 +118,29 @@ def add_new_drink(payload):
 def update_drink(payload, id):
     data = request.json
     try:
-        title = data["title"]
-        recipe = json.dumps(data["recipe"])
         toSave = Drink.query.get(id)
-        if (toSave):
-            toSave.title = title
-            toSave.recipe = recipe
-            toSave.update()
-            return jsonify({"success": True, "drinks": toSave.short()})
-        else:
+        if toSave is None:
             return jsonify({
-                "success": False,
-                "message": "Drink not found"
-            }), 404
+                "error":404,
+                "message":"Drink not found",
+                "success" : False
+            })
+        if "title" in data:
+            title = data["title"]
+            toSave.title = title 
+        if "recipe" in data:
+            recipe = json.dumps(data["recipe"])
+            toSave.recipe = recipe
+
+        toSave.update()
+        return jsonify({"success": True, "drinks": toSave.short()})
+
     except Exception as e:
-        message = e.orig.args
-        if message[0] == 'UNIQUE constraint failed: drink.title':
-            return jsonify({"message": "Duplicate entry for title"}), 409
+        Drink.rollback()
+        if(hasattr(e,"orig")):
+            message = e.orig.args
+            if message[0] == 'UNIQUE constraint failed: drink.title':
+                return jsonify({"message": "Duplicate entry for title"}), 409
         return jsonify(
             {"message": "There was an error proccessing your request"}), 400
 
@@ -220,6 +232,7 @@ def server_error():
 
 @app.errorhandler(AuthError)
 def handle_auth_error(e):
+    print(e.error)
     return jsonify({"message": e.error}), e.status_code
 
 
